@@ -1,26 +1,26 @@
 const router = require("express").Router()
-const Admin = require("../models/Admin")
 const jwt = require("jsonwebtoken")
 
-// ADMIN LOGIN
+// ADMIN LOGIN USING .ENV
 router.post("/login", async (req, res) => {
     try {
 
-        const admin = await Admin.findOne({
-            username: req.body.username
-        })
+        const { username, password } = req.body
 
-        if (!admin) {
+        // Compare with .env values
+        if (username !== process.env.ADMIN_USER) {
             return res.status(400).json("Admin not found")
         }
 
-        if (admin.password !== req.body.password) {
+        if (password !== process.env.ADMIN_PASS) {
             return res.status(400).json("Wrong password")
         }
 
+        // Create token
         const token = jwt.sign(
-            { id: admin._id },
-            process.env.JWT_SECRET
+            { role: "admin" },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
         )
 
         res.json({
@@ -29,7 +29,8 @@ router.post("/login", async (req, res) => {
         })
 
     } catch (err) {
-        res.status(500).json(err)
+        console.log(err)
+        res.status(500).json("Server error")
     }
 })
 
